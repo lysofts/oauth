@@ -205,7 +205,7 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 	return &resp, nil
 }
 
-//AuthMidleware is the authentication middleware
+//AuthMidleware is the authentication middleware for basic jwt authentication
 func (a Auth) AuthMidleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reqToken := c.Request.Header.Get("Authorization")
