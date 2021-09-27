@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -179,10 +178,6 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 	if err != nil {
 		return nil, fmt.Errorf("error unable to get user: %v", err)
 	}
-
-	file, _ := json.MarshalIndent(user, "", " ")
-
-	_ = ioutil.WriteFile("test.json", file, 0644)
 
 	valid, err := VerifyPassword(user.Password, input.Password)
 	if err != nil {
