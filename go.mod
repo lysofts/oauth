@@ -1,4 +1,4 @@
-module github.com/lysofts/oath
+module github.com/lysofts/oauth
 
 go 1.16
 
