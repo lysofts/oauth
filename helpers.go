@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/lysofts/profileutils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,10 +35,10 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, error) 
 }
 
 //ValidateToken validates the jwt token
-func ValidateToken(signedToken string) (claims *SignedDetails, err error) {
+func ValidateToken(signedToken string) (claims *profileutils.SignedDetails, err error) {
 	token, err := jwt.ParseWithClaims(
 		signedToken,
-		&SignedDetails{},
+		&profileutils.SignedDetails{},
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(SECRET_KEY), nil
 		},
@@ -47,7 +48,7 @@ func ValidateToken(signedToken string) (claims *SignedDetails, err error) {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*SignedDetails)
+	claims, ok := token.Claims.(*profileutils.SignedDetails)
 	if !ok {
 		err = fmt.Errorf("the token is invalid")
 		return nil, err

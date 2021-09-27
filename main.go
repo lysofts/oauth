@@ -12,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	database "github.com/lysofts/database-utils/mongo_db"
+	"github.com/lysofts/profileutils"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -34,7 +35,7 @@ func NewAuth(ctx context.Context, db *database.Database) *Auth {
 
 // GenerateAllTokens generates both the detailed token and refresh token
 func (a Auth) GenerateAllTokens(email string, firstName string, lastName string, uid string) (signedToken string, signedRefreshToken string, err error) {
-	claims := SignedDetails{
+	claims := profileutils.SignedDetails{
 		Email:     email,
 		FirstName: firstName,
 		LastName:  lastName,
@@ -44,7 +45,7 @@ func (a Auth) GenerateAllTokens(email string, firstName string, lastName string,
 		},
 	}
 
-	refreshClaims := SignedDetails{
+	refreshClaims := profileutils.SignedDetails{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(168)).Unix(),
 		},
@@ -118,7 +119,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 
 	token, refreshToken, _ := a.GenerateAllTokens(input.Email, input.FirstName, input.LastName, uid)
 
-	user := User{
+	user := profileutils.User{
 		UID:          uid,
 		FirstName:    input.FirstName,
 		LastName:     input.LastName,
@@ -165,7 +166,7 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 		return nil, fmt.Errorf("a user with this email %v not found", input.Email)
 	}
 
-	user := User{}
+	user := profileutils.User{}
 
 	err = a.db.GetCollection().FindOne(ctx, bson.M{"email": input.Email}).Decode(&user)
 
@@ -204,8 +205,8 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 	return &resp, nil
 }
 
-//Authorization is the authentication middleware
-func (a Auth) Authorization() gin.HandlerFunc {
+//AuthMidleware is the authentication middleware
+func (a Auth) AuthMidleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reqToken := c.Request.Header.Get("Authorization")
 		splitToken := strings.Split(reqToken, "Bearer")
