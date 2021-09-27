@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -13,7 +15,6 @@ import (
 	"github.com/google/uuid"
 	databaseutils "github.com/lysofts/database-utils"
 	"github.com/lysofts/profileutils"
-	"github.com/mitchellh/mapstructure"
 )
 
 //valid is the validator used to validate input data
@@ -173,10 +174,15 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 		return nil, err
 	}
 
-	err = mapstructure.Decode(res, &user)
+	byteData, _ := json.Marshal(res)
+	err = json.Unmarshal(byteData, &user)
 	if err != nil {
 		return nil, fmt.Errorf("error unable to get user: %v", err)
 	}
+
+	file, _ := json.MarshalIndent(user, "", " ")
+
+	_ = ioutil.WriteFile("test.json", file, 0644)
 
 	valid, err := VerifyPassword(user.Password, input.Password)
 	if err != nil {
@@ -206,6 +212,7 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 		Token:        token,
 		RefreshToken: refreshToken,
 	}
+
 	return &resp, nil
 }
 
