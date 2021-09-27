@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	databaseutils "github.com/lysofts/database-utils"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 var testCollection = "TestAuthUserCollection"
@@ -73,7 +72,7 @@ func TestAuth_SignUp(t *testing.T) {
 			}
 
 			if got != nil {
-				_, err = a.db.Delete(a.ctx, testCollection, bson.M{"_id": got.UID})
+				_, err = a.db.Delete(a.ctx, testCollection, map[string]interface{}{"_id": got.UID})
 				if err != nil {
 					t.Errorf("error, unable to delete test user: %v", err)
 					return
@@ -165,7 +164,7 @@ func TestAuth_Login(t *testing.T) {
 		})
 	}
 
-	_, err = a.db.Delete(a.ctx, testCollection, bson.M{"_id": user.UID})
+	_, err = a.db.Delete(a.ctx, testCollection, map[string]interface{}{"_id": user.UID})
 	if err != nil {
 		t.Errorf("error, unable to delete test user: %v", err)
 		return

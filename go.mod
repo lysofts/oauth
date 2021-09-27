@@ -10,6 +10,5 @@ require (
 	github.com/lysofts/database-utils v0.0.8
 	github.com/lysofts/profileutils v0.0.0-20210927055133-cb5e1fe5c835
 	github.com/mitchellh/mapstructure v1.4.2
-	go.mongodb.org/mongo-driver v1.7.2
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 )

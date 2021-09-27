@@ -14,7 +14,6 @@ import (
 	databaseutils "github.com/lysofts/database-utils"
 	"github.com/lysofts/profileutils"
 	"github.com/mitchellh/mapstructure"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 //valid is the validator used to validate input data
@@ -70,13 +69,13 @@ func (a Auth) GenerateAllTokens(email string, firstName string, lastName string,
 func (a Auth) UpdateAllTokens(ctx context.Context, signedToken string, signedRefreshToken string, userId string) error {
 	updatedAt := time.Now().Unix()
 
-	updateObj := bson.M{
+	updateObj := map[string]interface{}{
 		"token":        signedToken,
 		"refreshToken": signedRefreshToken,
 		"updatedAt":    updatedAt,
 	}
 
-	filter := bson.M{"_id": userId}
+	filter := map[string]interface{}{"_id": userId}
 
 	_, err := a.db.Update(ctx, a.collectionName, filter, updateObj)
 
@@ -94,7 +93,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 		return nil, err
 	}
 
-	users, err := a.db.Read(ctx, a.collectionName, bson.M{"phone": input.Phone})
+	users, err := a.db.Read(ctx, a.collectionName, map[string]interface{}{"phone": input.Phone})
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +102,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 		return nil, fmt.Errorf("a user with this phone number `%v` already exists", input.Phone)
 	}
 
-	users, err = a.db.Read(ctx, a.collectionName, bson.M{"email": input.Email})
+	users, err = a.db.Read(ctx, a.collectionName, map[string]interface{}{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +157,7 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 		return nil, err
 	}
 
-	users, err := a.db.ReadOne(ctx, a.collectionName, bson.M{"email": input.Email})
+	users, err := a.db.ReadOne(ctx, a.collectionName, map[string]interface{}{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +168,7 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 
 	user := profileutils.User{}
 
-	res, err := a.db.ReadOne(ctx, a.collectionName, bson.M{"email": input.Email})
+	res, err := a.db.ReadOne(ctx, a.collectionName, map[string]interface{}{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
