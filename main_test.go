@@ -4,20 +4,21 @@ import (
 	"context"
 	"testing"
 
-	database "github.com/lysofts/database-utils/mongo_db"
+	databaseutils "github.com/lysofts/database-utils"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func initializeAuth() (context.Context, *database.Database) {
+var testCollection = "TestAuthUserCollection"
+
+func initAuth() *Auth {
 	ctx := context.Background()
-	db := database.New(ctx, "test_users")
-	return ctx, db
+	db := databaseutils.NewDatabase(databaseutils.MONGO)
+	a := NewAuth(ctx, &db, testCollection)
+	return a
 }
 
 func TestAuth_SignUp(t *testing.T) {
-	ctx, db := initializeAuth()
-	a := NewAuth(ctx, db)
-
+	a := initAuth()
 	fName := "test"
 	lName := "test2"
 
@@ -34,7 +35,7 @@ func TestAuth_SignUp(t *testing.T) {
 		{
 			name: "sad invalid input provided",
 			args: args{
-				ctx: ctx,
+				ctx: a.ctx,
 				input: SignUpInput{
 					FirstName: fName,
 				},
@@ -45,7 +46,7 @@ func TestAuth_SignUp(t *testing.T) {
 		{
 			name: "happy, signup user",
 			args: args{
-				ctx: ctx,
+				ctx: a.ctx,
 				input: SignUpInput{
 					FirstName: fName,
 					LastName:  lName,
@@ -72,7 +73,7 @@ func TestAuth_SignUp(t *testing.T) {
 			}
 
 			if got != nil {
-				_, err = db.Delete(ctx, bson.M{"_id": got.UID})
+				_, err = a.db.Delete(a.ctx, testCollection, bson.M{"_id": got.UID})
 				if err != nil {
 					t.Errorf("error, unable to delete test user: %v", err)
 					return
@@ -83,8 +84,7 @@ func TestAuth_SignUp(t *testing.T) {
 }
 
 func TestAuth_Login(t *testing.T) {
-	ctx, db := initializeAuth()
-	a := NewAuth(ctx, db)
+	a := initAuth()
 	type args struct {
 		ctx   context.Context
 		input LoginInput
@@ -103,7 +103,7 @@ func TestAuth_Login(t *testing.T) {
 		Password:  validPass,
 	}
 
-	user, err := a.SignUp(ctx, userData)
+	user, err := a.SignUp(a.ctx, userData)
 	if err != nil {
 		t.Errorf("error, unable to create test user: %v", err)
 		return
@@ -117,7 +117,7 @@ func TestAuth_Login(t *testing.T) {
 		{
 			name: "invalid email",
 			args: args{
-				ctx: ctx,
+				ctx: a.ctx,
 				input: LoginInput{
 					Email:    invalidEmail,
 					Password: "1234",
@@ -129,7 +129,7 @@ func TestAuth_Login(t *testing.T) {
 		{
 			name: "invalid password",
 			args: args{
-				ctx: ctx,
+				ctx: a.ctx,
 				input: LoginInput{
 					Email:    "test@email.com",
 					Password: invalidPass,
@@ -141,7 +141,7 @@ func TestAuth_Login(t *testing.T) {
 		{
 			name: "valid email and password",
 			args: args{
-				ctx: ctx,
+				ctx: a.ctx,
 				input: LoginInput{
 					Email:    validEmail,
 					Password: validPass,
@@ -165,7 +165,7 @@ func TestAuth_Login(t *testing.T) {
 		})
 	}
 
-	_, err = db.Delete(ctx, bson.M{"_id": user.UID})
+	_, err = a.db.Delete(a.ctx, testCollection, bson.M{"_id": user.UID})
 	if err != nil {
 		t.Errorf("error, unable to delete test user: %v", err)
 		return

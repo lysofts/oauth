@@ -11,8 +11,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	database "github.com/lysofts/database-utils/mongo_db"
+	databaseutils "github.com/lysofts/database-utils"
 	"github.com/lysofts/profileutils"
+	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -21,15 +22,17 @@ var valid = validator.New()
 
 //Auth is the authentication object that implements jwt
 type Auth struct {
-	ctx context.Context
-	db  *database.Database
+	ctx            context.Context
+	collectionName string
+	db             *databaseutils.Database
 }
 
 //NewAuth initializes the Auth
-func NewAuth(ctx context.Context, db *database.Database) *Auth {
+func NewAuth(ctx context.Context, db *databaseutils.Database, collectionName string) *Auth {
 	return &Auth{
-		ctx: ctx,
-		db:  db,
+		ctx:            ctx,
+		collectionName: collectionName,
+		db:             db,
 	}
 }
 
@@ -75,7 +78,7 @@ func (a Auth) UpdateAllTokens(ctx context.Context, signedToken string, signedRef
 
 	filter := bson.M{"_id": userId}
 
-	_, err := a.db.Update(ctx, filter, updateObj)
+	_, err := a.db.Update(ctx, a.collectionName, filter, updateObj)
 
 	if err != nil {
 		return err
@@ -90,23 +93,22 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 	if err != nil {
 		return nil, err
 	}
-	collection := a.db.GetCollection()
 
-	count, err := collection.CountDocuments(ctx, bson.M{"phone": input.Phone})
+	users, err := a.db.Read(ctx, a.collectionName, bson.M{"phone": input.Phone})
 	if err != nil {
 		return nil, err
 	}
 
-	if count > 0 {
+	if len(users) > 0 {
 		return nil, fmt.Errorf("a user with this phone number `%v` already exists", input.Phone)
 	}
 
-	count, err = collection.CountDocuments(ctx, bson.M{"email": input.Email})
+	users, err = a.db.Read(ctx, a.collectionName, bson.M{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
 
-	if count > 0 {
+	if len(users) > 0 {
 		return nil, fmt.Errorf("a user with this email `%v` already exists", input.Email)
 	}
 
@@ -132,7 +134,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 		UpdatedAt:    time.Now().Unix(),
 	}
 
-	_, err = a.db.Create(ctx, user)
+	_, err = a.db.Create(ctx, a.collectionName, user)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create a user profile: %v", err)
@@ -155,21 +157,24 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 	if err != nil {
 		return nil, err
 	}
-	collection := a.db.GetCollection()
 
-	count, err := collection.CountDocuments(ctx, bson.M{"email": input.Email})
+	users, err := a.db.ReadOne(ctx, a.collectionName, bson.M{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
 
-	if count != 1 {
+	if len(users) == 0 {
 		return nil, fmt.Errorf("a user with this email %v not found", input.Email)
 	}
 
 	user := profileutils.User{}
 
-	err = a.db.GetCollection().FindOne(ctx, bson.M{"email": input.Email}).Decode(&user)
+	res, err := a.db.ReadOne(ctx, a.collectionName, bson.M{"email": input.Email})
+	if err != nil {
+		return nil, err
+	}
 
+	err = mapstructure.Decode(res, &user)
 	if err != nil {
 		return nil, fmt.Errorf("error unable to get user: %v", err)
 	}

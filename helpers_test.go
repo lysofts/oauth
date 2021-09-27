@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	database "github.com/lysofts/database-utils/mongo_db"
+	databaseutils "github.com/lysofts/database-utils"
+	database "github.com/lysofts/database-utils/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -92,9 +93,9 @@ func TestVerifyPassword(t *testing.T) {
 func TestValidateToken(t *testing.T) {
 	ctx := context.Background()
 
-	db := database.New(ctx, "test_users")
+	db := databaseutils.NewDatabase(databaseutils.MONGO)
 
-	auth := NewAuth(ctx, db)
+	auth := NewAuth(ctx, &db, database.UserCollectionName)
 
 	//create a user
 	user, err := auth.SignUp(ctx, SignUpInput{
@@ -138,7 +139,7 @@ func TestValidateToken(t *testing.T) {
 		})
 	}
 
-	_, err = db.Delete(ctx, bson.M{"_id": user.UID})
+	_, err = db.Delete(ctx, database.UserCollectionName, bson.M{"_id": user.UID})
 	if err != nil {
 		t.Errorf("unable to delete test user, %v", err)
 		return

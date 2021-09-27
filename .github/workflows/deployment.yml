@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  AUTH_DATABASE_URL: ${{secrets.AUTH_DATABASE_URL}}
+  AUTH_DATABASE_NAME: ${{secrets.AUTH_DATABASE_NAME}}
+  AUTH_SECRET_KEY: ${{secrets.AUTH_SECRET_KEY}}
+
 jobs:
 
   build:
@@ -17,6 +22,10 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.17
+
+    - name: Install Go dependencies
+      run: |
+        go mod tidy
 
     - name: Build
       run: go build -v ./...
