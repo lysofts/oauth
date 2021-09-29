@@ -28,7 +28,7 @@ func AuthMidleware() gin.HandlerFunc {
 		reqToken = splitToken[1]
 		claims, err := ValidateToken(reqToken)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}

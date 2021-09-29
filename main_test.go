@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	databaseutils "github.com/lysofts/database-utils"
+	"github.com/lysofts/database-utils/utils"
 )
 
-var testCollection = "TestAuthUserCollection"
+var testCollection utils.DatabaseTable = "test_users"
 
 func initAuth() *Auth {
 	ctx := context.Background()

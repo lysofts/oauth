@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	databaseutils "github.com/lysofts/database-utils"
+	"github.com/lysofts/database-utils/utils"
 	"github.com/lysofts/profileutils"
 )
 
@@ -18,17 +19,17 @@ var valid = validator.New()
 
 //Auth is the authentication object that implements jwt
 type Auth struct {
-	ctx            context.Context
-	collectionName string
-	db             *databaseutils.Database
+	ctx   context.Context
+	table utils.DatabaseTable
+	db    *databaseutils.Database
 }
 
 //NewAuth initializes the Auth
-func NewAuth(ctx context.Context, db *databaseutils.Database, collectionName string) *Auth {
+func NewAuth(ctx context.Context, db *databaseutils.Database, table utils.DatabaseTable) *Auth {
 	return &Auth{
-		ctx:            ctx,
-		collectionName: collectionName,
-		db:             db,
+		ctx:   ctx,
+		table: table,
+		db:    db,
 	}
 }
 
@@ -74,7 +75,7 @@ func (a Auth) UpdateAllTokens(ctx context.Context, signedToken string, signedRef
 
 	filter := map[string]interface{}{"_id": userId}
 
-	_, err := a.db.Update(ctx, a.collectionName, filter, updateObj)
+	_, err := a.db.Update(ctx, a.table, filter, updateObj)
 
 	if err != nil {
 		return err
@@ -90,7 +91,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 		return nil, err
 	}
 
-	users, err := a.db.Read(ctx, a.collectionName, map[string]interface{}{"phone": input.Phone})
+	users, err := a.db.Read(ctx, a.table, map[string]interface{}{"phone": input.Phone})
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +100,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 		return nil, fmt.Errorf("a user with this phone number `%v` already exists", input.Phone)
 	}
 
-	users, err = a.db.Read(ctx, a.collectionName, map[string]interface{}{"email": input.Email})
+	users, err = a.db.Read(ctx, a.table, map[string]interface{}{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +131,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 		UpdatedAt:    time.Now().Unix(),
 	}
 
-	_, err = a.db.Create(ctx, a.collectionName, user)
+	_, err = a.db.Create(ctx, a.table, user)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create a user profile: %v", err)
@@ -154,7 +155,7 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 		return nil, err
 	}
 
-	users, err := a.db.ReadOne(ctx, a.collectionName, map[string]interface{}{"email": input.Email})
+	users, err := a.db.ReadOne(ctx, a.table, map[string]interface{}{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +166,7 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 
 	user := profileutils.User{}
 
-	res, err := a.db.ReadOne(ctx, a.collectionName, map[string]interface{}{"email": input.Email})
+	res, err := a.db.ReadOne(ctx, a.table, map[string]interface{}{"email": input.Email})
 	if err != nil {
 		return nil, err
 	}
