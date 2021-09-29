@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -209,34 +206,4 @@ func (a Auth) Login(ctx context.Context, input LoginInput) (*AuthResponse, error
 	}
 
 	return &resp, nil
-}
-
-//AuthMidleware is the authentication middleware for basic jwt authentication
-func (a Auth) AuthMidleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		reqToken := c.Request.Header.Get("Authorization")
-		splitToken := strings.Split(reqToken, "Bearer")
-		reqToken = splitToken[1]
-
-		if reqToken == "" {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "No Authorization header provided"})
-			c.Abort()
-			return
-		}
-
-		claims, err := ValidateToken(reqToken)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-			c.Abort()
-			return
-		}
-
-		c.Set("email", claims.Email)
-		c.Set("firstName", claims.FirstName)
-		c.Set("lastName", claims.LastName)
-		c.Set("uid", claims.UID)
-
-		c.Next()
-
-	}
 }
