@@ -129,6 +129,7 @@ func (a Auth) SignUp(ctx context.Context, input SignUpInput) (*AuthResponse, err
 		RefreshToken: refreshToken,
 		CreatedAt:    time.Now().Unix(),
 		UpdatedAt:    time.Now().Unix(),
+		Active:       true,
 	}
 
 	_, err = a.db.Create(ctx, a.table, user)
